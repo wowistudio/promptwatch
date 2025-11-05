@@ -8,3 +8,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Page {
+  id                 Int      @id @default(autoincrement())
+  url                String 
+  domain             String
+  title              String
+  aiModelMentioned   String
+  citationsCount     Int
+  sentiment          String
+  visibilityScore    Int
+  competitorMentioned String
+  queryCategory      String
+  trafficEstimate    Int
+  domainAuthority    Int
+  mentionsCount      Int
+  positionInResponse Int
+  responseType       String
+  geographicRegion   String
+  lastUpdated        DateTime
+
+  createdAt          DateTime @default(now())
+
+  @@index([url])
+  @@index([domain])
+  @@index([aiModelMentioned])
+  @@index([lastUpdated])
+  @@unique([url, lastUpdated])
+}

@@ -1,6 +1,29 @@
 # Frontend & Full-Stack Developer Assignment
 
-This repository serves as a technical assignment for frontend and full-stack developer candidates at [Promptwatch](https://promptwatch.com/). It provides a modern, production-ready monorepo foundation that you can build upon to demonstrate your skills.
+## CSV upload diagram
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant Gcloud
+
+    Client->>Server: validate CSV
+    Server-->>Client: presigned url + uploadId
+    Client->>Gcloud: file upload
+    Gcloud-->>Client: ok
+    Client->>Server: trigger process
+    Server->>Server: process in background
+    Server-->>Client: ok
+    Client->>Server: poll status
+```
+
+## Potential next steps
+- Error handling: show individual csv row / db upload errors to the user so the data can be adjusted and re-inserted
+- Update of previously imported rows: now i skip all the rows that are previously inserted (combo of url & updatedAt)
+- Let the processing be handled by a task runner with proper persistance of progress
+- List CSV past imports (show status, rows inserted, what rows failed, etc.)
+
 
 **About Promptwatch**: Promptwatch helps companies monitor and optimize their brand visibility across AI search engines like ChatGPT, Claude, Perplexity, and other AI platforms. We're building the future of AI search optimization.
 

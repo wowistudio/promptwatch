@@ -4,16 +4,27 @@ services:
         environment:
             POSTGRES_USER: repo
             POSTGRES_PASSWORD: repo
-            POSTGRES_DB: repo_${NODE_ENV}
+            POSTGRES_DB: repo_${NODE_ENV:-development}
         ports:
             - "5432:5432"
         volumes:
             - repo_postgres_data:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U repo"]
+            test: [ "CMD-SHELL", "pg_isready -U repo" ]
             interval: 5s
             timeout: 5s
             retries: 5
+
+    gcloud:
+        image: fsouza/fake-gcs-server:1.52.2
+        container_name: gcloud
+        command: [ "-port", "8065", "-scheme", "http", "-external-url", "http://gcloud:8065", "-location", "EUROPE-WEST1", "-public-host", "localhost:8065" ]
+        volumes:
+            - ./gcloud/data:/data
+            - ./gcloud/data:/storage
+            - ./gcloud/entrypoint.sh:/entrypoint.sh:ro
+        ports:
+            - "8065:8065"
 
 volumes:
     repo_postgres_data:

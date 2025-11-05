@@ -1,11 +1,11 @@
-import Fastify from "fastify";
-import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import cors from "@fastify/cors";
-import { appRouter } from "./routers";
+import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
+import Fastify from "fastify";
+import { appRouter } from "./routers/index.js";
 import { createContext } from "./trpc";
 
 // Export the router type for use in frontend
-export type { AppRouter } from "./routers";
+export type { AppRouter } from "./routers/index.js";
 
 const fastify = Fastify({
   maxParamLength: 5000,

@@ -10,15 +10,21 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@fastify/cors": "^8.4.0",
+    "@fastify/cors": "^11.1.0",
+    "@fastify/websocket": "^11.2.0",
+    "@google-cloud/storage": "^7.17.3",
+    "@repo/database": "workspace:*",
     "@trpc/server": "^10.45.0",
-    "fastify": "^4.24.3",
-    "zod": "^3.22.4",
-    "@repo/database": "workspace:*"
+    "fastify": "^5.6.1",
+    "papaparse": "^5.4.0",
+    "uuid": "^13.0.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
+    "@types/papaparse": "^5.3.16",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.1.4",
     "typescript": "^5.2.2"
   }
-} 
+}
