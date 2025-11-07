@@ -1,7 +1,14 @@
 # Frontend & Full-Stack Developer Assignment
 
-## CSV upload diagram
+## CSV upload
 
+### Core features 
+- gcloud fake server to mimic bucket storage
+- store csv in s3 first to for robustness
+- buffered streaming from s3 to consumers that upload to db
+- frontend: progress & feedback on successful/skipped/errored items
+
+### Diagram
 ```mermaid
 sequenceDiagram
     participant Client
@@ -18,14 +25,12 @@ sequenceDiagram
     Client->>Server: poll status
 ```
 
-## Potential next steps
+### Potential next steps
 - Error handling: show individual csv row / db upload errors to the user so the data can be adjusted and re-inserted
 - Update of previously imported rows: now i skip all the rows that are previously inserted (combo of url & updatedAt)
 - Let the processing be handled by a task runner with proper persistance of progress
 - List CSV past imports (show status, rows inserted, what rows failed, etc.)
 
-
-**About Promptwatch**: Promptwatch helps companies monitor and optimize their brand visibility across AI search engines like ChatGPT, Claude, Perplexity, and other AI platforms. We're building the future of AI search optimization.
 
 ## 📋 Assignment Instructions
 
