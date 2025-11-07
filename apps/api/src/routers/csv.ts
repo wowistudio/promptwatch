@@ -1,27 +1,12 @@
 import { publicProcedure, router } from "@/trpc.js";
+import { BUCKET_NAME, CSVUploader, storageClient } from "@/utils/orchestrator.js";
+import { Pool } from "@/utils/pool.js";
 import { getSignedUrl } from "@/utils/signedurl.js";
 import { validateCSV } from "@/utils/validator.js";
 import { prisma } from "@repo/database";
-import { fork } from "child_process";
-import path from "path";
+import Papa from "papaparse";
 import { v4 as uuidv4 } from 'uuid';
 import { z } from "zod";
-
-const UploadResponseType = {
-    progress: "progress",
-    error: "error",
-    complete: "complete",
-} as const;
-
-type TUploadResponseType = typeof UploadResponseType[keyof typeof UploadResponseType];
-
-export type UploadResponse = {
-    type: TUploadResponseType;
-    processed: number;
-    total?: number;
-    message?: string;
-    error?: string;
-}
 
 type TUploadResult = {
     success_count: number;
@@ -31,6 +16,7 @@ type TUploadResult = {
     status: "processing" | "complete";
 }
 const uploadProgressMap: { [uploadId: string]: TUploadResult } = {};
+
 
 export const csvRouter = router({
     validate: publicProcedure
@@ -60,31 +46,55 @@ export const csvRouter = router({
         )
         .mutation(async ({ input, ctx }) => {
             const uploadId = input.id;
-            const orchestratorPath = path.resolve('./src/utils/orchestrator.js');
-            const orchestrator = fork(orchestratorPath);
-
-            uploadProgressMap[uploadId] = { success_count: 0, error_count: 0, total_count: 0, skipped_count: 0, status: "processing" };
-
-            orchestrator.send({ uploadId });
-            orchestrator.on("message", (msg: any) => {
-                const currValue = uploadProgressMap[uploadId];
-
-                if (msg.type === "progress") {
-                    const { success_count, error_count, total_count, skipped_count } = msg.data;
-                    uploadProgressMap[uploadId] = {
-                        success_count: success_count + currValue.success_count,
-                        error_count: error_count + currValue.error_count,
-                        total_count: total_count + currValue.total_count,
-                        skipped_count: skipped_count + currValue.skipped_count,
-                        status: "processing",
-                    };
-                } else if (msg.type === "complete") {
-                    uploadProgressMap[uploadId] = {
-                        ...currValue,
-                        status: "complete",
-                    };
-                }
+            const parser = Papa.parse(Papa.NODE_STREAM_INPUT, {
+                header: true,
+                skipEmptyLines: true,
+                transformHeader: (header: string) => {
+                    return header.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                },
             });
+
+            uploadProgressMap[uploadId] = {
+                success_count: 0,
+                error_count: 0,
+                total_count: 0,
+                skipped_count: 0,
+                status: "processing",
+            };
+
+
+            const onResult = async (data: any) => {
+                const currValue = uploadProgressMap[uploadId];
+                console.log("ON RESULT", data)
+                const { success_count, error_count, total_count, skipped_count } = data;
+                uploadProgressMap[uploadId] = {
+                    success_count: success_count + currValue.success_count,
+                    error_count: error_count + currValue.error_count,
+                    total_count: total_count + currValue.total_count,
+                    skipped_count: skipped_count + currValue.skipped_count,
+                    status: "processing",
+                };
+            }
+
+            const onFinished = () => {
+                uploadProgressMap[uploadId] = {
+                    ...uploadProgressMap[uploadId],
+                    status: "complete",
+                };
+            }
+
+            const stream = storageClient
+                .bucket(BUCKET_NAME)
+                .file(`${input.id}.csv`)
+                .createReadStream()
+
+            const uploader = new CSVUploader(
+                new Pool("./src/utils/process-csv.js", 3, onResult),
+                stream,
+                parser,
+                onFinished
+            );
+            await uploader.start();
 
             return {
                 success: true,
@@ -150,7 +160,6 @@ export const csvRouter = router({
             }),
         )
         .query(async ({ input }) => {
-            // custom count -> count by url from domain
             const data = await prisma.page.groupBy({
                 by: ['domain'],
                 _count: {
@@ -162,6 +171,6 @@ export const csvRouter = router({
                     domain: item.domain,
                     count: item._count._all,
                 }))
-                .sort((a, b) => b.count - a.count); // Sort by count descending
+                .sort((a, b) => b.count - a.count);
         }),
 });

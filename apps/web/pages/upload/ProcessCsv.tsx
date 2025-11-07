@@ -120,7 +120,7 @@ export default function ProcessCsv({ content, uploadId, signedUrl }: UploadCsvPr
                     </div>
                     <div className="rounded-md border px-3 py-2 bg-white">
                         <div className="text-muted-foreground">Processed</div>
-                        <div className="font-medium tabular-nums">{processedCount}/{totalRows}</div>
+                        <div className="font-medium tabular-nums">{Math.max(0, processedCount - 1)}/{Math.max(0, totalRows - 1)}</div>
                     </div>
                 </div>
             </div>
